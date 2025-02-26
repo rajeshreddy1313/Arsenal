@@ -1,0 +1,42 @@
+####this script can be used to find writable smb shares on the machine
+
+$shares = Get-SmbShare | Select-Object -ExpandProperty Name
+foreach ($share in $shares) {
+    Write-Host "[*] Checking share: $share"
+    $items = Get-ChildItem "\\127.0.0.1\$share" -Recurse -ErrorAction SilentlyContinue
+    foreach ($item in $items) {
+        if ($item.Attributes -notmatch "ReadOnly") {
+            try {
+                $testFile = "$($item.FullName)\writetest.txt"
+                Set-Content -Path $testFile -Value "Writable" -ErrorAction Stop
+                Write-Host "[+] Writable: $($item.FullName)"
+                Remove-Item -Path $testFile -Force
+            } catch {
+                Write-Host "[-] No write access: $($item.FullName)"
+            }
+        }
+    }
+}
+
+
+
+
+
+##inside specific folder 
+
+
+
+$share = "\\127.0.0.1\<name of share>"
+$folders = Get-ChildItem -Path $share -Recurse -Directory -ErrorAction SilentlyContinue
+
+foreach ($folder in $folders) {
+    $testFile = "$($folder.FullName)\writetest.txt"
+    try {
+        Set-Content -Path $testFile -Value "Writable" -ErrorAction Stop
+        Write-Host "[+] Writable: $($folder.FullName)"
+        Remove-Item -Path $testFile -Force
+    } catch {
+        Write-Host "[-] No write access: $($folder.FullName)"
+    }
+}
+
